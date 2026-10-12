@@ -1,0 +1,148 @@
+{
+  "model_type": "Word + character TF-IDF ensemble with multiclass logistic regression",
+  "training_samples": 594,
+  "test_samples": 156,
+  "overall_accuracy": 0.6731,
+  "confidence_threshold": 0.65,
+  "test_fallback_rate": 0.7821,
+  "evaluation_protocol": "Group-held-out split by source complaint template to prevent paraphrase leakage",
+  "classes": [
+    "drainage",
+    "electricity",
+    "encroachment",
+    "public_health",
+    "roads",
+    "sanitation",
+    "water_supply"
+  ],
+  "class_labels": [
+    "Drainage & Sewerage",
+    "Electricity & Streetlighting",
+    "Encroachments & Town Planning",
+    "Public Health & Pest Control",
+    "Roads & Footpaths",
+    "Solid Waste & Sanitation",
+    "Water Supply & Pipelines"
+  ],
+  "confusion_matrix": [
+    [
+      9,
+      0,
+      0,
+      0,
+      0,
+      0,
+      13
+    ],
+    [
+      1,
+      17,
+      0,
+      0,
+      1,
+      0,
+      0
+    ],
+    [
+      1,
+      0,
+      18,
+      0,
+      0,
+      7,
+      0
+    ],
+    [
+      0,
+      2,
+      0,
+      17,
+      1,
+      0,
+      0
+    ],
+    [
+      3,
+      0,
+      0,
+      0,
+      14,
+      0,
+      0
+    ],
+    [
+      0,
+      1,
+      3,
+      1,
+      14,
+      15,
+      0
+    ],
+    [
+      0,
+      3,
+      0,
+      0,
+      0,
+      0,
+      15
+    ]
+  ],
+  "classification_report": {
+    "drainage": {
+      "precision": 0.6429,
+      "recall": 0.4091,
+      "f1_score": 0.5,
+      "support": 22.0
+    },
+    "electricity": {
+      "precision": 0.7391,
+      "recall": 0.8947,
+      "f1_score": 0.8095,
+      "support": 19.0
+    },
+    "encroachment": {
+      "precision": 0.8571,
+      "recall": 0.6923,
+      "f1_score": 0.766,
+      "support": 26.0
+    },
+    "public_health": {
+      "precision": 0.9444,
+      "recall": 0.85,
+      "f1_score": 0.8947,
+      "support": 20.0
+    },
+    "roads": {
+      "precision": 0.4667,
+      "recall": 0.8235,
+      "f1_score": 0.5957,
+      "support": 17.0
+    },
+    "sanitation": {
+      "precision": 0.6818,
+      "recall": 0.4412,
+      "f1_score": 0.5357,
+      "support": 34.0
+    },
+    "water_supply": {
+      "precision": 0.5357,
+      "recall": 0.8333,
+      "f1_score": 0.6522,
+      "support": 18.0
+    },
+    "macro avg": {
+      "precision": 0.6954,
+      "recall": 0.7063,
+      "f1_score": 0.6791,
+      "support": 156.0
+    },
+    "weighted avg": {
+      "precision": 0.7059,
+      "recall": 0.6731,
+      "f1_score": 0.6684,
+      "support": 156.0
+    }
+  }
+}

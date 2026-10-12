@@ -1,0 +1,921 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Public Grievance Auto-Routing and SLA Redressal System | Municipal Corporation</title>
+  <meta name="description" content="Municipal public grievance classification, automated department dispatch, and SLA-based auto-escalation system.">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Official Top Government Strip -->
+  <div class="gov-top-strip">
+    <div>Public Grievance Redressal and Monitoring System | Government of India Standard Compliant</div>
+    <div class="system-env-tag">
+      <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+      <span>Live System Database &amp; NLP Model Active</span>
+    </div>
+  </div>
+
+  <!-- Main Institutional Header -->
+  <header class="gov-header">
+    <div class="gov-header-inner">
+      <div class="gov-branding">
+        <div class="gov-emblem" aria-label="Government Emblem">
+          <svg class="icon" style="width:26px; height:26px;" viewBox="0 0 24 24">
+            <path d="M3 21h18M3 10h18M5 10v11M19 10v11M9 10v11M15 10v11M12 2L3 7h18z"/>
+          </svg>
+        </div>
+        <div class="gov-title-group">
+          <h1>PG-ARS: Public Grievance Auto-Routing and Redressal System</h1>
+          <p>Automated NLP Complaint Classification, Confidence Fallback Triage, and Time-Bound SLA Escalation</p>
+        </div>
+      </div>
+      <div class="gov-header-actions">
+        <div class="role-context">
+          <label for="role-selector">Active workspace</label>
+          <select id="role-selector" aria-label="Select application role">
+            <option value="citizen">Citizen Portal</option>
+            <option value="city">City Operations Officer</option>
+            <option value="state">Maharashtra State Head</option>
+          </select>
+          <select id="role-city-selector" aria-label="Select assigned city" hidden></select>
+        </div>
+        <button id="btn-trigger-sla" class="btn btn-secondary btn-sm" title="Run background SLA compliance scan">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+          <span>Run SLA Sweep</span>
+        </button>
+        <button id="btn-refresh-all" class="btn btn-secondary btn-sm" title="Refresh live data from server">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+          <span>Sync Data</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Sticky Navigation Bar -->
+  <nav class="gov-navbar">
+    <div class="gov-nav-container">
+      <button class="gov-nav-btn active" data-view="view-submit">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        <span>Lodge Grievance</span>
+      </button>
+      <button class="gov-nav-btn" data-view="view-track">
+        <svg class="icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+        <span>Track Status</span>
+      </button>
+      <button class="gov-nav-btn role-nav" data-role-nav="city" data-view="view-city-dashboard">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M3 21h18M5 21V9l7-5 7 5v12M9 21v-6h6v6"/></svg>
+        <span>City Command</span>
+      </button>
+      <button class="gov-nav-btn role-nav" data-role-nav="state" data-view="view-state-dashboard">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M3 21h18M5 21V10h4v11M10 21V4h4v17M15 21V7h4v14"/></svg>
+        <span>State Command</span>
+      </button>
+      <button class="gov-nav-btn" data-view="view-console">
+        <svg class="icon" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+        <span>Operations Console</span>
+        <span id="nav-count-total" class="nav-badge">0</span>
+      </button>
+      <button class="gov-nav-btn" data-view="view-triage">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        <span>Triage Review Desk</span>
+        <span id="nav-count-triage" class="nav-badge warning">0</span>
+      </button>
+      <button class="gov-nav-btn" data-view="view-escalations">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <span>SLA and Escalations</span>
+        <span id="nav-count-escalated" class="nav-badge danger">0</span>
+      </button>
+      <button class="gov-nav-btn" data-view="view-analytics">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
+        <span>Analytics and Model Evaluation</span>
+      </button>
+      <button class="gov-nav-btn simulator-nav" data-view="view-simulator">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M4 19V5M4 19h16"/><path d="M7 15l4-4 3 2 5-7"/><circle cx="7" cy="15" r="1"/><circle cx="11" cy="11" r="1"/><circle cx="14" cy="13" r="1"/><circle cx="19" cy="6" r="1"/></svg>
+        <span>City Simulator</span>
+        <span class="nav-badge live">NEW</span>
+      </button>
+      <button class="gov-nav-btn" data-view="view-sandbox">
+        <svg class="icon" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        <span>Classifier Sandbox</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- Main Container -->
+  <main class="gov-main">
+
+    <!-- KPI Summary Bar (Shared across dashboard) -->
+    <div class="kpi-grid">
+      <div class="kpi-card info-card">
+        <div class="kpi-label">
+          <span>Total Lodged</span>
+          <svg class="icon" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/></svg>
+        </div>
+        <div id="kpi-total" class="kpi-value">0</div>
+        <div class="kpi-subtext">Total complaints registered in database</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">
+          <span>Auto-Routed</span>
+          <svg class="icon" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </div>
+        <div id="kpi-auto-routed" class="kpi-value">0</div>
+        <div id="kpi-auto-pct" class="kpi-subtext">0% of total volume</div>
+      </div>
+      <div class="kpi-card warning-card">
+        <div class="kpi-label">
+          <span>Manual Review Pending</span>
+          <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        </div>
+        <div id="kpi-manual-pending" class="kpi-value">0</div>
+        <div id="kpi-threshold-label" class="kpi-subtext">Confidence below configured threshold</div>
+      </div>
+      <div class="kpi-card alert-card">
+        <div class="kpi-label">
+          <span>Overdue Escalations</span>
+          <svg class="icon" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+        </div>
+        <div id="kpi-escalated" class="kpi-value">0</div>
+        <div id="kpi-escalation-split" class="kpi-subtext">0 Level 1 / 0 Level 2</div>
+      </div>
+      <div class="kpi-card success-card">
+        <div class="kpi-label">
+          <span>SLA Redressal Rate</span>
+          <svg class="icon" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        </div>
+        <div id="kpi-sla-compliance" class="kpi-value">0%</div>
+        <div class="kpi-subtext">Resolved within statutory SLA deadline</div>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- VIEW 1: LODGE GRIEVANCE (Citizen Submission) -->
+    <!-- ========================================== -->
+    <section id="view-submit" class="view-section active">
+      <div class="section-header-block">
+        <div>
+          <h2>Lodge Public Grievance</h2>
+          <p>Submit citizen complaint with automated natural language department routing and SLA assignment</p>
+        </div>
+      </div>
+
+      <div class="gov-card">
+        <div class="gov-card-header">
+          <h3>Citizen Grievance Registration Form</h3>
+          <span class="header-meta">Mandatory fields marked with asterisk (*)</span>
+        </div>
+        <div class="gov-card-body">
+          <form id="form-complaint">
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="input-citizen-name">Citizen Full Name <span class="required">*</span></label>
+                <input type="text" id="input-citizen-name" class="form-control" placeholder="e.g. Anand R. Kulkarni" required>
+              </div>
+              <div class="form-group">
+                <label for="input-citizen-phone">Mobile Contact Number <span class="required">*</span></label>
+                <input type="tel" id="input-citizen-phone" class="form-control" placeholder="e.g. +91 98220 12345" required>
+              </div>
+              <div class="form-group">
+                <label for="input-citizen-email">Email Address <span class="required">*</span></label>
+                <input type="email" id="input-citizen-email" class="form-control" placeholder="e.g. citizen.kulkarni@example.com" required>
+              </div>
+              <div class="form-group">
+                <label for="input-city">Municipal City <span class="required">*</span></label>
+                <select id="input-city" class="form-control" required><option value="Pune">Pune</option></select>
+              </div>
+              <div class="form-group">
+                <label for="input-ward">Municipal Ward Zone <span class="required">*</span></label>
+                <select id="input-ward" class="form-control" required>
+                  <option value="Ward 1">Ward 1 (Central Commercial District)</option>
+                  <option value="Ward 2">Ward 2 (Civil Lines &amp; University Zone)</option>
+                  <option value="Ward 3">Ward 3 (Old Market &amp; Station Area)</option>
+                  <option value="Ward 4">Ward 4 (Mayur Colony &amp; Transit Hub)</option>
+                  <option value="Ward 5">Ward 5 (Shastri Nagar &amp; Industrial Sector)</option>
+                  <option value="Ward 6">Ward 6 (Model Town &amp; Bypass Zone)</option>
+                  <option value="Ward 7">Ward 7 (Kothrud Residential Zone)</option>
+                  <option value="Ward 8">Ward 8 (Airport Road &amp; High-Density Ward)</option>
+                  <option value="Ward 9">Ward 9 (Indira Nagar &amp; Rehabilitation Sector)</option>
+                  <option value="Ward 10">Ward 10 (Kalyani Nagar Bridge Zone)</option>
+                  <option value="Ward 11">Ward 11 (Viman Nagar Commercial Area)</option>
+                  <option value="Ward 12">Ward 12 (Karve Road Wholesale Mandai)</option>
+                  <option value="Ward 13">Ward 13 (Hadapsar Market Area)</option>
+                  <option value="Ward 14">Ward 14 (Aundh Main Sector)</option>
+                  <option value="Ward 15">Ward 15 (Outer Ring Road Ward)</option>
+                </select>
+              </div>
+              <div class="form-group full-width">
+                <label for="input-locality">Locality / Landmark Address <span class="required">*</span></label>
+                <input type="text" id="input-locality" class="form-control" placeholder="e.g. Near Tilak Road Bus Shelter, Opposite General Hospital" required>
+              </div>
+              <div class="form-group full-width">
+                <label for="input-complaint-text">Detailed Grievance Description <span class="required">*</span></label>
+                <textarea id="input-complaint-text" class="form-control" rows="4" placeholder="Describe the civic issue in free text. The system analyzes the text to determine the responsible municipal department and assigns the statutory resolution SLA." required></textarea>
+                <div class="intake-tools">
+                  <label class="language-select"><span>Complaint language</span><select id="input-language" class="form-control"><option>Auto detect</option><option>English</option><option>Hindi</option><option>Marathi</option><option>Hinglish / Roman Indic</option></select></label>
+                  <button type="button" id="btn-voice-input" class="btn btn-secondary btn-sm" title="Dictate grievance using your microphone">
+                    <svg class="icon" viewBox="0 0 24 24"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0014 0M12 17v5M8 22h8"/></svg> Voice input
+                  </button>
+                  <button type="button" id="btn-use-location" class="btn btn-secondary btn-sm" title="Attach current GPS coordinates">
+                    <svg class="icon" viewBox="0 0 24 24"><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1116 0z"/><circle cx="12" cy="10" r="2"/></svg> Use my location
+                  </button>
+                  <span id="location-status" class="location-status">No GPS attached</span>
+                  <input type="hidden" id="input-latitude"><input type="hidden" id="input-longitude">
+                </div>
+                <div id="duplicate-alert" class="duplicate-alert" hidden></div>
+                
+                <!-- Quick Real Test Samples -->
+                <div class="samples-bar">
+                  <span class="samples-label">Load Realistic Sample:</span>
+                  <button type="button" class="sample-chip" data-sample="pothole">Deep Pothole Crater</button>
+                  <button type="button" class="sample-chip" data-sample="pipe">Muddy Tap Water</button>
+                  <button type="button" class="sample-chip" data-sample="wire">Live Dangling Electric Cable</button>
+                  <button type="button" class="sample-chip" data-sample="garbage">Overflowing Community Dump</button>
+                  <button type="button" class="sample-chip" data-sample="manhole">Open Broken Sewer Manhole</button>
+                  <button type="button" class="sample-chip" data-sample="dengue">Mosquito Fogging Request</button>
+                  <button type="button" class="sample-chip" data-sample="hawker">Footpath Encroachment</button>
+                  <button type="button" class="sample-chip" data-sample="ambiguous">Borderline Ambiguous Case</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Real-Time Model Classification Telemetry Preview -->
+            <div id="classifier-preview-box" class="classifier-preview-box" style="display: none;">
+              <div class="preview-header">
+                <div class="preview-title">
+                  <svg class="icon" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                  <span>Real-Time NLP Classification Preview</span>
+                </div>
+                <div id="preview-urgency-tag"></div>
+              </div>
+              <div style="display: flex; gap: 16px; align-items: baseline; margin-bottom: 8px;">
+                <div>
+                  <span style="font-size: 11px; color: var(--gov-text-muted);">Predicted Department: </span>
+                  <strong id="preview-dept-name" style="font-size: 14px; color: var(--gov-navy);">---</strong>
+                </div>
+                <div>
+                  <span style="font-size: 11px; color: var(--gov-text-muted);">Confidence Score: </span>
+                  <strong id="preview-confidence" style="font-size: 14px; color: var(--gov-blue);">---</strong>
+                </div>
+                <div>
+                  <span style="font-size: 11px; color: var(--gov-text-muted);">Routing Decision: </span>
+                  <span id="preview-routing-badge" class="status-badge">---</span>
+                </div>
+              </div>
+              <p id="preview-reasoning" style="font-size: 12px; color: var(--gov-slate); margin-bottom: 10px;"></p>
+              
+              <div id="preview-prob-meters"></div>
+            </div>
+
+            <div style="margin-top: 18px; display: flex; gap: 12px; align-items: center;">
+              <button type="submit" id="btn-submit-complaint" class="btn btn-primary">
+                <svg class="icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+                <span>Submit Grievance to Municipal Portal</span>
+              </button>
+              <button type="button" id="btn-preview-nlp" class="btn btn-secondary">
+                <svg class="icon" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                <span>Analyze Text with NLP Model</span>
+              </button>
+            </div>
+          </form>
+
+          <!-- Formal Confirmation Receipt -->
+          <div id="receipt-container" style="display: none;"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- VIEW 2: TRACK STATUS (Citizen Tracking)     -->
+    <!-- ========================================== -->
+    <section id="view-track" class="view-section">
+      <div class="section-header-block">
+        <div>
+          <h2>Public Grievance Status Tracking</h2>
+          <p>Track real-time resolution timeline, statutory SLA countdown, and departmental accountability</p>
+        </div>
+      </div>
+
+      <div class="gov-card">
+        <div class="gov-card-body">
+          <form id="form-track" style="display: flex; gap: 12px; align-items: center; max-width: 600px; margin-bottom: 12px;">
+            <input type="text" id="input-track-token" class="form-control" placeholder="Enter Tracking Token (e.g. GRV-2026-01001)" required style="font-weight: 600;">
+            <button type="submit" class="btn btn-primary">
+              <svg class="icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+              <span>Track Grievance</span>
+            </button>
+          </form>
+          <div id="track-quick-tokens" class="samples-bar">
+            <span class="samples-label">Recent Trackable Tokens:</span>
+            <!-- Populated via JS -->
+          </div>
+        </div>
+      </div>
+
+      <div id="track-result-container" style="display: none;"></div>
+    </section>
+
+    <!-- ROLE DASHBOARD: CITY OPERATIONS -->
+    <section id="view-city-dashboard" class="view-section role-dashboard">
+      <div class="command-hero city-command-hero">
+        <div><div class="eyebrow"><span class="live-dot"></span> City Operations Workspace</div><h2 id="city-dashboard-title">Pune Municipal Command</h2><p>City-scoped grievance intelligence, operational pressure, and priority response queue.</p></div>
+        <span class="scope-chip" id="city-scope-chip">Pune · Maharashtra</span>
+      </div>
+      <div id="city-command-kpis" class="command-kpi-grid"></div>
+      <div class="command-grid">
+        <article class="gov-card intelligence-card"><div class="gov-card-header"><div><h3>AI-Detected Top Issues</h3><span class="header-meta">TF-IDF themes ranked from received complaints</span></div><span class="ai-chip">AI INTELLIGENCE</span></div><div id="city-top-issues" class="issue-stack"></div></article>
+        <article class="gov-card"><div class="gov-card-header"><div><h3>Priority Complaint Queue</h3><span class="header-meta">Urgency, SLA, age and uncertainty scoring</span></div></div><div id="city-priority-list" class="priority-list"></div></article>
+      </div>
+    </section>
+
+    <!-- ROLE DASHBOARD: MAHARASHTRA STATE HEAD -->
+    <section id="view-state-dashboard" class="view-section role-dashboard">
+      <div class="command-hero state-command-hero">
+        <div><div class="eyebrow"><span class="live-dot"></span> State Executive Workspace</div><h2>Maharashtra Grievance Command Center</h2><p>Statewide oversight across participating municipal cities, issue clusters, and critical complaints.</p></div>
+        <span class="scope-chip">10 Cities · Maharashtra</span>
+      </div>
+      <div id="state-command-kpis" class="command-kpi-grid"></div>
+      <div class="command-grid state-grid">
+        <article class="gov-card"><div class="gov-card-header"><div><h3>City Performance Matrix</h3><span class="header-meta">Compare volume, resolution and escalation pressure</span></div></div><div class="table-responsive"><table class="gov-table"><thead><tr><th>City</th><th>Complaints</th><th>Resolved</th><th>Escalated</th><th>Triage</th><th>Pressure</th></tr></thead><tbody id="state-city-tbody"></tbody></table></div></article>
+        <article class="gov-card intelligence-card"><div class="gov-card-header"><div><h3>Statewide Top Issues</h3><span class="header-meta">Dominant themes across Maharashtra</span></div><span class="ai-chip">ML RANKED</span></div><div id="state-top-issues" class="issue-stack"></div></article>
+      </div>
+      <article class="gov-card"><div class="gov-card-header"><div><h3>State Priority Complaints</h3><span class="header-meta">Highest operational-risk cases across all cities</span></div></div><div id="state-priority-list" class="priority-list horizontal"></div></article>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- VIEW 3: OPERATIONS CONSOLE (All Records)    -->
+    <!-- ========================================== -->
+    <section id="view-console" class="view-section">
+      <div class="section-header-block">
+        <div>
+          <h2>Municipal Operations Console</h2>
+          <p>Master complaint ledger across all departments with search, status transitions, and misrouting reroute</p>
+        </div>
+        <div>
+          <button id="btn-export-csv" class="btn btn-secondary btn-sm">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            <span>Export View Data</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Filters Toolbar -->
+      <div class="toolbar-grid">
+        <div class="form-group">
+          <label for="filter-dept">Department</label>
+          <select id="filter-dept" class="form-control">
+            <option value="ALL">All Departments</option>
+            <option value="roads">Roads &amp; Footpaths</option>
+            <option value="water_supply">Water Supply &amp; Pipelines</option>
+            <option value="electricity">Electricity &amp; Streetlighting</option>
+            <option value="sanitation">Solid Waste &amp; Sanitation</option>
+            <option value="drainage">Drainage &amp; Sewerage</option>
+            <option value="public_health">Public Health &amp; Pest Control</option>
+            <option value="encroachment">Encroachments &amp; Town Planning</option>
+            <option value="unassigned">Unassigned (Triage Desk)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="filter-status">Redressal Status</label>
+          <select id="filter-status" class="form-control">
+            <option value="ALL">All Statuses</option>
+            <option value="RECEIVED">Received</option>
+            <option value="ROUTED">Routed</option>
+            <option value="IN_PROGRESS">In Progress</option>
+            <option value="RESOLVED">Resolved</option>
+            <option value="REJECTED">Rejected</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="filter-routing">Routing Channel</label>
+          <select id="filter-routing" class="form-control">
+            <option value="ALL">All Channels</option>
+            <option value="AUTO">Auto-Routed (High Confidence)</option>
+            <option value="MANUAL_REVIEW">Manual Review Fallback</option>
+            <option value="MANUAL_CONFIRMED">Manual Confirmed</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="filter-escalated">SLA Breach Flag</label>
+          <select id="filter-escalated" class="form-control">
+            <option value="ALL">All Records</option>
+            <option value="1">Escalated Only (Breached SLA)</option>
+            <option value="0">Within SLA</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="filter-search">Search Text / Token / Citizen</label>
+          <input type="text" id="filter-search" class="form-control" placeholder="Search grievance text...">
+        </div>
+      </div>
+
+      <!-- Main Table -->
+      <div class="gov-card">
+        <div class="gov-card-header">
+          <h3>Grievance Records (<span id="console-table-count">0</span> matching)</h3>
+          <span class="header-meta">Click any tracking token to inspect details or update ground action</span>
+        </div>
+        <div class="table-container">
+          <table class="gov-table" id="console-table">
+            <thead>
+              <tr>
+                <th>Token</th>
+                <th>Citizen &amp; Ward</th>
+                <th>Department</th>
+                <th>Routing Type</th>
+                <th>Urgency</th>
+                <th>Confidence</th>
+                <th>Status</th>
+                <th>SLA Due</th>
+                <th>Escalation</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="console-tbody">
+              <!-- Rendered via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- VIEW 4: TRIAGE REVIEW DESK (Fallback)       -->
+    <!-- ========================================== -->
+    <section id="view-triage" class="view-section">
+      <div class="section-header-block">
+        <div>
+          <h2>Manual Review Triage Desk</h2>
+          <p id="triage-threshold-label">Confidence-based fallback mechanism for uncertain complaints</p>
+        </div>
+      </div>
+
+      <div class="gov-card" style="border-left: 4px solid var(--gov-warning);">
+        <div class="gov-card-body" style="padding: 14px 20px;">
+          <h4 style="color: var(--gov-warning); font-size: 14px; margin-bottom: 4px;">Human-in-the-Loop Safeguard Policy</h4>
+          <p style="font-size: 12px; color: var(--gov-text-muted);">
+            In accordance with system specifications, complaints with ambiguous phrasing or multi-domain intersections are never auto-dispatched blindly. 
+            Triage Desk operators review the complaint text, examine the candidate model distributions, and confirm the appropriate departmental assignment.
+          </p>
+        </div>
+      </div>
+
+      <div class="gov-card">
+        <div class="gov-card-header">
+          <h3>Awaiting Manual Confirmation Queue (<span id="triage-table-count">0</span> pending)</h3>
+        </div>
+        <div class="table-container">
+          <table class="gov-table" id="triage-table">
+            <thead>
+              <tr>
+                <th>Token</th>
+                <th>Citizen Details</th>
+                <th>Complaint Description</th>
+                <th>Top Prediction</th>
+                <th>Confidence</th>
+                <th>Urgency</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="triage-tbody">
+              <!-- Rendered via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- VIEW 5: SLA & ESCALATION MONITOR            -->
+    <!-- ========================================== -->
+    <section id="view-escalations" class="view-section">
+      <div class="section-header-block">
+        <div>
+          <h2>SLA Breach and Auto-Escalation Ledger</h2>
+          <p>Active monitoring of statutory deadlines with automated multi-tier escalation hierarchy</p>
+        </div>
+        <div>
+          <button id="btn-escalations-run-sweep" class="btn btn-primary btn-sm">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+            <span>Execute Immediate SLA Sweep</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Department SLA Reference Matrix -->
+      <div class="gov-card">
+        <div class="gov-card-header">
+          <h3>Statutory Department SLA Parameters</h3>
+          <span class="header-meta">Governed under Municipal Citizen Redressal Charter</span>
+        </div>
+        <div class="table-container">
+          <table class="gov-table">
+            <thead>
+              <tr>
+                <th>Department</th>
+                <th>Standard Resolution SLA</th>
+                <th>Level 1 Escalation (Superintending Eng.)</th>
+                <th>Level 2 Escalation (Municipal Comm.)</th>
+                <th>Active Field Staff</th>
+                <th>Department Head</th>
+              </tr>
+            </thead>
+            <tbody id="dept-sla-tbody">
+              <!-- Rendered via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Active Escalated Ledger -->
+      <div class="gov-card" style="border-top: 3px solid var(--gov-danger);">
+        <div class="gov-card-header">
+          <h3>Active Overdue Escalated Complaints (<span id="escalations-table-count">0</span> cases)</h3>
+          <span class="header-meta">Complaints that exceeded the resolution deadline and triggered escalation</span>
+        </div>
+        <div class="table-container">
+          <table class="gov-table" id="escalations-table">
+            <thead>
+              <tr>
+                <th>Token</th>
+                <th>Citizen &amp; Ward</th>
+                <th>Department</th>
+                <th>Current Status</th>
+                <th>SLA Deadline</th>
+                <th>Hours Overdue</th>
+                <th>Escalation Level</th>
+                <th>Escalated Authority</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="escalations-tbody">
+              <!-- Rendered via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- VIEW 6: ANALYTICS & MODEL EVALUATION        -->
+    <!-- ========================================== -->
+    <section id="view-analytics" class="view-section">
+      <div class="section-header-block">
+        <div>
+          <h2>System Analytics and ML Model Evaluation</h2>
+          <p>Measured performance criteria from held-out test dataset, department distribution, and SLA adherence</p>
+        </div>
+      </div>
+
+      <!-- Real ML Model Evaluation Summary -->
+      <div class="gov-card">
+        <div class="gov-card-header">
+          <h3>Machine Learning Classifier Evaluation Report (Held-Out Test Set)</h3>
+          <span class="header-meta">Scikit-Learn Multi-Class Pipeline Evaluation</span>
+        </div>
+        <div class="gov-card-body">
+          <div class="form-grid" style="margin-bottom: 16px;">
+            <div class="receipt-item">
+              <div class="item-label">Algorithm Architecture</div>
+              <div class="item-value" id="eval-model-type">TF-IDF Vectorizer + Tuned Logistic Regression</div>
+            </div>
+            <div class="receipt-item">
+              <div class="item-label">Overall Test Accuracy</div>
+              <div class="item-value" id="eval-accuracy" style="color: var(--gov-success);">---</div>
+            </div>
+            <div class="receipt-item">
+              <div class="item-label">Training / Test Sample Split</div>
+              <div class="item-value" id="eval-split">---</div>
+            </div>
+            <div class="receipt-item">
+              <div class="item-label">Confidence Threshold</div>
+              <div class="item-value" id="eval-threshold">0.65</div>
+            </div>
+            <div class="receipt-item">
+              <div class="item-label">Test Set Manual Review Fallback Rate</div>
+              <div class="item-value" id="eval-fallback-rate" style="color: var(--gov-warning);">---</div>
+            </div>
+          </div>
+          <div class="evaluation-notice"><strong>Leakage-resistant evaluation</strong><span id="eval-protocol">Source complaint templates are held out as groups, so paraphrases cannot appear in both training and test data.</span></div>
+
+          <!-- Per-Class Metrics Table -->
+          <h4 style="font-size: 13px; color: var(--gov-navy); margin-bottom: 8px;">Per-Department Precision, Recall, and F1-Score</h4>
+          <div class="table-container" style="margin-bottom: 20px;">
+            <table class="gov-table" id="eval-metrics-table">
+              <thead>
+                <tr>
+                  <th>Department Category</th>
+                  <th>Precision</th>
+                  <th>Recall</th>
+                  <th>F1-Score</th>
+                  <th>Support (Test Instances)</th>
+                </tr>
+              </thead>
+              <tbody id="eval-metrics-tbody">
+                <!-- Rendered via JS -->
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Confusion Matrix Table -->
+          <h4 style="font-size: 13px; color: var(--gov-navy); margin-bottom: 8px;">Held-Out Test Confusion Matrix (Rows: Ground Truth, Columns: Predicted)</h4>
+          <div class="table-container" style="margin-bottom: 20px;">
+            <table class="cm-table" id="confusion-matrix-table">
+              <!-- Rendered via JS -->
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Department Volume & SLA Compliance Breakdown -->
+      <div class="gov-card">
+        <div class="gov-card-header">
+          <h3>Department-Wise Complaint Volume and Resolution Adherence</h3>
+        </div>
+        <div class="table-container">
+          <table class="gov-table" id="analytics-dept-table">
+            <thead>
+              <tr>
+                <th>Department Name</th>
+                <th>Total Complaints</th>
+                <th>In Progress</th>
+                <th>Resolved</th>
+                <th>Active Escalations</th>
+                <th>Default SLA</th>
+              </tr>
+            </thead>
+            <tbody id="analytics-dept-tbody">
+              <!-- Rendered via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Ward-Wise Complaint Distribution -->
+      <div class="gov-card">
+        <div class="gov-card-header">
+          <h3>Ward-Wise Grievance Density</h3>
+          <span class="header-meta">Geographic distribution across municipal zones</span>
+        </div>
+        <div class="table-container">
+          <table class="gov-table" id="analytics-ward-table">
+            <thead>
+              <tr>
+                <th>Ward Zone</th>
+                <th>Registered Complaints</th>
+                <th>Active Escalations</th>
+              </tr>
+            </thead>
+            <tbody id="analytics-ward-tbody">
+              <!-- Rendered via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- VIEW 7: CITY DIGITAL TWIN SIMULATOR         -->
+    <!-- ========================================== -->
+    <section id="view-simulator" class="view-section">
+      <div class="sim-hero">
+        <div>
+          <div class="eyebrow"><span class="live-dot"></span> Municipal Digital Twin</div>
+          <h2>City Operations Scenario Lab</h2>
+          <p>Stress-test routing policy, field capacity, and SLA resilience before deploying operational changes.</p>
+        </div>
+        <div class="sim-hero-actions">
+          <button type="button" id="btn-sim-reset" class="btn btn-secondary">Reset</button>
+          <button type="button" id="btn-sim-run" class="btn btn-primary sim-run-btn">
+            <svg class="icon" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            Run Simulation
+          </button>
+        </div>
+      </div>
+
+      <div class="sim-layout">
+        <aside class="sim-control-panel gov-card">
+          <div class="gov-card-header"><div><h3>Scenario Controls</h3><span class="header-meta">Policy and demand inputs</span></div></div>
+          <div class="gov-card-body">
+            <div class="form-group sim-field">
+              <label for="sim-preset">Event preset</label>
+              <select id="sim-preset" class="form-control"><option value="normal">Normal weekday</option></select>
+              <small id="sim-preset-description">Typical civic demand with balanced department load.</small>
+            </div>
+            <div class="form-group sim-field">
+              <label for="sim-city-scope">Geographic scope</label>
+              <select id="sim-city-scope" class="form-control"><option value="">All Maharashtra cities</option></select>
+            </div>
+            <div class="sim-control-grid">
+              <div class="form-group"><label for="sim-duration">Duration (hours)</label><input id="sim-duration" class="form-control" type="number" min="1" max="168" value="24"></div>
+              <div class="form-group"><label for="sim-rate">Arrivals / hour</label><input id="sim-rate" class="form-control" type="number" min="1" max="100" value="10"></div>
+              <div class="form-group"><label for="sim-triage">Triage officers</label><input id="sim-triage" class="form-control" type="number" min="1" max="50" value="4"></div>
+              <div class="form-group"><label for="sim-seed">Random seed</label><input id="sim-seed" class="form-control" type="number" min="1" max="999999" value="42"></div>
+            </div>
+            <div class="range-control">
+              <div><label for="sim-threshold">Auto-route threshold</label><output id="sim-threshold-value">65%</output></div>
+              <input id="sim-threshold" type="range" min="30" max="95" value="65">
+              <small>Higher values reduce risky auto-routing but increase human review.</small>
+            </div>
+            <div class="range-control"><div><label for="sim-ambiguity">Ambiguous complaints</label><output id="sim-ambiguity-value">16%</output></div><input id="sim-ambiguity" type="range" min="0" max="70" value="16"></div>
+            <div class="range-control"><div><label for="sim-urgency">High urgency</label><output id="sim-urgency-value">18%</output></div><input id="sim-urgency" type="range" min="0" max="80" value="18"></div>
+            <details class="staffing-details"><summary>Department staffing</summary><div id="sim-staffing-controls" class="staffing-grid"></div></details>
+          </div>
+        </aside>
+
+        <div class="sim-workspace">
+          <div id="sim-empty-state" class="sim-empty-state gov-card">
+            <div class="sim-orbit" aria-hidden="true"><span></span><span></span><span></span><div>PG</div></div>
+            <h3>Configure a city scenario</h3>
+            <p>Run a simulation to observe complaints moving through classification, triage, field operations, and SLA escalation.</p>
+            <div class="sim-feature-chips"><span>Deterministic replay</span><span>Capacity modelling</span><span>SLA forecasting</span></div>
+          </div>
+
+          <div id="sim-results" class="sim-results" hidden>
+            <div class="sim-summary-grid">
+              <article class="sim-stat"><span>Simulated intake</span><strong id="sim-kpi-total">0</strong><small id="sim-kpi-scenario">—</small></article>
+              <article class="sim-stat cyan"><span>Auto-routed</span><strong id="sim-kpi-auto">0%</strong><small id="sim-kpi-manual">0 manual reviews</small></article>
+              <article class="sim-stat green"><span>SLA compliance</span><strong id="sim-kpi-sla">0%</strong><small id="sim-kpi-breaches">0 breaches</small></article>
+              <article class="sim-stat amber"><span>P95 resolution</span><strong id="sim-kpi-p95">0h</strong><small id="sim-kpi-median">0h median</small></article>
+              <article class="sim-stat red"><span>Critical bottleneck</span><strong id="sim-kpi-bottleneck">—</strong><small id="sim-kpi-escalations">0 escalations</small></article>
+            </div>
+            <article class="gov-card sim-intelligence-strip">
+              <div class="gov-card-header"><div><h3>Simulated Top Issues</h3><span class="header-meta">AI-ranked issue load and predicted SLA impact</span></div><span class="ai-chip">SCENARIO ML</span></div>
+              <div id="sim-top-issues" class="sim-issue-grid"></div>
+            </article>
+            <div class="sim-visual-grid">
+              <article class="gov-card sim-chart-card">
+                <div class="gov-card-header"><div><h3>Operational Throughput</h3><span class="header-meta">Arrivals, resolutions and SLA breaches by simulated hour</span></div><span class="status-badge auto-routed">LIVE MODEL</span></div>
+                <div class="gov-card-body"><canvas id="sim-timeline-chart" height="230" aria-label="Simulation throughput chart"></canvas><div class="chart-legend"><span class="arrivals">Arrivals</span><span class="resolved">Resolved</span><span class="breaches">SLA breaches</span></div></div>
+              </article>
+              <article class="gov-card sim-feed-card">
+                <div class="gov-card-header"><div><h3>Decision Stream</h3><span class="header-meta">Model and escalation events</span></div><span id="sim-event-count" class="nav-badge">0</span></div>
+                <div id="sim-event-feed" class="sim-event-feed"></div>
+              </article>
+            </div>
+            <div class="sim-visual-grid lower">
+              <article class="gov-card">
+                <div class="gov-card-header"><div><h3>Department Pressure</h3><span class="header-meta">Utilization and SLA performance</span></div></div>
+                <div class="table-responsive"><table class="gov-table"><thead><tr><th>Department</th><th>Intake</th><th>Staff</th><th>Utilization</th><th>Avg wait</th><th>SLA</th></tr></thead><tbody id="sim-dept-tbody"></tbody></table></div>
+              </article>
+              <article class="gov-card ward-card">
+                <div class="gov-card-header"><div><h3>Ward Activity Grid</h3><span class="header-meta">Relative complaint density and breaches</span></div></div>
+                <div id="sim-ward-grid" class="ward-grid"></div>
+              </article>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- VIEW 8: CLASSIFIER SANDBOX (Model Tester)   -->
+    <!-- ========================================== -->
+    <section id="view-sandbox" class="view-section">
+      <div class="section-header-block">
+        <div>
+          <h2>Interactive Classifier Sandbox</h2>
+          <p>Test arbitrary citizen complaint text with real-time probability output and fallback simulation</p>
+        </div>
+      </div>
+
+      <div class="gov-card">
+        <div class="gov-card-body">
+          <div class="form-group" style="margin-bottom: 14px;">
+            <label for="sandbox-input-text">Enter Grievance Text to Classify:</label>
+            <textarea id="sandbox-input-text" class="form-control" rows="3" placeholder="Type or paste any complaint text here to evaluate real-time model predictions..."></textarea>
+          </div>
+
+          <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 16px;">
+            <button type="button" id="btn-sandbox-classify" class="btn btn-primary">
+              <svg class="icon" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              <span>Run Classification</span>
+            </button>
+            <button type="button" class="btn btn-secondary btn-sm" id="btn-sandbox-clear">Clear</button>
+          </div>
+
+          <div id="sandbox-results-panel" style="display: none;">
+            <div class="form-grid" style="margin-bottom: 16px;">
+              <div class="receipt-item">
+                <div class="item-label">Predicted Department</div>
+                <div class="item-value" id="sandbox-res-dept" style="color: var(--gov-navy);">---</div>
+              </div>
+              <div class="receipt-item">
+                <div class="item-label">Top Confidence Score</div>
+                <div class="item-value" id="sandbox-res-conf" style="color: var(--gov-blue);">---</div>
+              </div>
+              <div class="receipt-item">
+                <div class="item-label">Routing Decision</div>
+                <div class="item-value" id="sandbox-res-routing">---</div>
+              </div>
+              <div class="receipt-item">
+                <div class="item-label">Detected Urgency</div>
+                <div class="item-value" id="sandbox-res-urgency">---</div>
+              </div>
+            </div>
+
+            <div style="background-color: #f8fafc; border: 1px solid var(--gov-border); padding: 12px; border-radius: var(--gov-radius); margin-bottom: 16px;">
+              <div style="font-size: 11px; font-weight: 700; color: var(--gov-navy); text-transform: uppercase; margin-bottom: 4px;">Classification Reasoning</div>
+              <p id="sandbox-res-reasoning" style="font-size: 13px; color: var(--gov-slate);"></p>
+              <div id="sandbox-res-salient" style="margin-top: 6px; font-size: 12px; color: var(--gov-text-muted);"></div>
+            </div>
+
+            <h4 style="font-size: 13px; color: var(--gov-navy); margin-bottom: 8px;">Probability Distribution Across All Departments</h4>
+            <div id="sandbox-prob-bars"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ========================================== -->
+  <!-- MODAL: COMPLAINT INSPECTOR & UPDATE         -->
+  <!-- ========================================== -->
+  <div id="modal-inspector" class="modal-overlay">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 id="modal-inspector-title">Complaint Inspection</h3>
+        <button type="button" class="btn btn-secondary btn-sm modal-close-btn">&times;</button>
+      </div>
+      <div class="modal-body" id="modal-inspector-body">
+        <!-- Injected via JS -->
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary modal-close-btn">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL: TRIAGE ACTION DIALOG                -->
+  <!-- ========================================== -->
+  <div id="modal-triage" class="modal-overlay">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3>Triage Review Desk: Confirm Department Assignment</h3>
+        <button type="button" class="btn btn-secondary btn-sm modal-close-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="triage-modal-complaint-id">
+        <div style="margin-bottom: 12px;">
+          <strong id="triage-modal-token" style="color: var(--gov-blue);">---</strong>
+        </div>
+        <p id="triage-modal-text" style="background-color: #f8fafc; border: 1px solid var(--gov-border); padding: 10px; border-radius: var(--gov-radius); font-size: 13px; margin-bottom: 14px;"></p>
+        
+        <div class="form-group" style="margin-bottom: 14px;">
+          <label for="triage-modal-select-dept">Select Confirmed Department:</label>
+          <select id="triage-modal-select-dept" class="form-control">
+            <option value="roads">Roads &amp; Footpaths</option>
+            <option value="water_supply">Water Supply &amp; Pipelines</option>
+            <option value="electricity">Electricity &amp; Streetlighting</option>
+            <option value="sanitation">Solid Waste &amp; Sanitation</option>
+            <option value="drainage">Drainage &amp; Sewerage</option>
+            <option value="public_health">Public Health &amp; Pest Control</option>
+            <option value="encroachment">Encroachments &amp; Town Planning</option>
+          </select>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 14px;">
+          <label for="triage-modal-operator">Operator Name:</label>
+          <input type="text" id="triage-modal-operator" class="form-control" value="Triage Desk Operator">
+        </div>
+
+        <div class="form-group">
+          <label for="triage-modal-notes">Operator Review Remarks:</label>
+          <textarea id="triage-modal-notes" class="form-control" rows="2" placeholder="State reason for department selection..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary modal-close-btn">Cancel</button>
+        <button type="button" id="btn-triage-modal-confirm" class="btn btn-primary">Confirm &amp; Route Complaint</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Official Government Footer -->
+  <footer class="gov-footer">
+    <div class="gov-footer-inner">
+      <div class="footer-col">
+        <h4>PG-ARS: Public Grievance Auto-Routing System</h4>
+        <p>A decision-support and time-bound grievance dispatch platform designed to eliminate manual routing bottlenecks and enforce administrative accountability.</p>
+      </div>
+      <div class="footer-col">
+        <h4>System Information</h4>
+        <p>NLP Engine: Calibrated Multi-Class Classifier</p>
+        <p id="footer-threshold-label">Confidence Fallback Threshold: loading</p>
+        <p>Database: SQLite with Real-Time SLA Daemon</p>
+      </div>
+      <div class="footer-col">
+        <h4>Statutory Compliance</h4>
+        <p>Aligned with Central Public Grievance Redress and Monitoring System (CPGRAMS) guidelines and Right to Public Services timelines.</p>
+      </div>
+    </div>
+  </footer>
+
+  <div id="toast-region" class="toast-region" aria-live="polite" aria-atomic="true"></div>
+  <script src="app.js"></script>
+</body>
+</html>
